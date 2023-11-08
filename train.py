@@ -28,13 +28,15 @@ class ModelTrain:
             num_workers=5
         )
         if torch.cuda.is_available():
-            self.device = 'cuda'
+            self.device = torch.device('cuda')
         else:
             self.device = 'cpu'
+        print(self.device)
         
         self.model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
         self.model.fc = nn.Linear(self.model.fc.in_features, classes_num)
-        self.model.to(device=self.device)
+        
+        self.model = self.model.to(self.device)
 
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.0001, weight_decay=0.00001)
         # self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer, mode="min", factor=0.5, patience=3, min_lr = 0.000001)
@@ -56,8 +58,8 @@ class ModelTrain:
 
             for batch in tqdm(self.train_loader):
                 imgs, labels = batch
-                imgs.to(self.device)
-                labels.to(self.device)
+                imgs = imgs.to(self.device)
+                labels = labels.to(self.device)
 
                 logits = self.model(imgs)
 
@@ -83,8 +85,8 @@ class ModelTrain:
 
             for batch in tqdm(self.valid_loader):
                 imgs, labels = batch
-                imgs.to(self.device)
-                labels.to(self.device)
+                imgs = imgs.to(self.device)
+                labels = labels.to(self.device)
 
                 with torch.no_grad():
                     logits = self.model(imgs)
