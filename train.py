@@ -28,10 +28,9 @@ class ModelTrain:
             num_workers=5
         )
         if torch.cuda.is_available():
-            self.device = torch.device('cuda')
+            self.device = 'cuda'
         else:
             self.device = 'cpu'
-        print(self.device)
         
         self.model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
         self.model.fc = nn.Linear(self.model.fc.in_features, classes_num)
