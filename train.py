@@ -10,7 +10,7 @@ import torch.nn.functional as F
 class ModelTrain:
     def __init__(self):
         train_name = 'train.csv'
-        file_path = 'course\ML\lab\classify-leaves\\'
+        file_path = ''
         self.train_dataset = LeavesData(train_name, file_path, mode='train')
         self.valid_dataset = LeavesData(train_name, file_path, mode='valid')
         self.train_loader = DataLoader(
@@ -103,7 +103,7 @@ class ModelTrain:
 
             if valid_acc > best_acc:
                 best_acc = valid_acc
-                torch.save(self.model.state_dict(), 'course\ML\lab\classify-leaves\pre_res_model.ckpt')
+                torch.save(self.model.state_dict(), 'pre_res_model.ckpt')
 
 
 

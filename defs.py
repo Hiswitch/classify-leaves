@@ -1,6 +1,6 @@
 import pandas as pd
 
-train_data = pd.read_csv('course\ML\lab\classify-leaves\\train.csv')
+train_data = pd.read_csv('train.csv')
 labels = sorted(list(set(train_data['label'])))
 
 classes_num = len(labels)
