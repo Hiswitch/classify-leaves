@@ -121,7 +121,7 @@ class ModelTrain:
         model.fc = nn.Linear(self.model.fc.in_features, classes_num)
         
         model = self.model.to(self.device)
-        model.load_state_dict(torch.load(self.model_path))
+        model.load_state_dict(torch.load(self.model_path, map_location=torch.device('cpu')))
 
         model.eval()
 
