@@ -20,7 +20,7 @@ class LeavesData(Dataset):
 
         self.data = pd.read_csv(file_path + csv_name)  #header=None是去掉表头部分
         # 计算 length
-        self.data_len = len(self.data['label'])
+        self.data_len = len(self.data['image'])
         self.train_len = int(self.data_len * (1 - valid_ratio))
 
         if self.mode == 'train':
@@ -77,7 +77,7 @@ class LeavesData(Dataset):
             self.images = np.asarray(self.data.iloc[self.train_len:, 0])  
             self.labels = np.asarray(self.data.iloc[self.train_len:, 1])
         elif mode == 'test':
-            self.images = np.asarray(self.data.iloc[1:, 0])
+            self.images = np.asarray(self.data.iloc[0:, 0])
         
         self.length = len(self.images)
 

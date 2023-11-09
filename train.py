@@ -3,16 +3,20 @@ from torch.utils.data import DataLoader
 import torch
 import torchvision.models as models
 from torch import nn
-from defs import classes_num
+from defs import classes_num, num_to_class
 from tqdm import tqdm
-import torch.nn.functional as F
+import pandas as pd
 
 class ModelTrain:
     def __init__(self):
-        train_name = 'train.csv'
-        file_path = ''
-        self.train_dataset = LeavesData(train_name, file_path, mode='train')
-        self.valid_dataset = LeavesData(train_name, file_path, mode='valid')
+        self.train_name = 'train.csv'
+        self.test_name = 'test.csv'
+        self.file_path = ''
+        self.model_path = 'pre_res_model.ckpt'
+        self.savefile_path = 'submission.csv'
+        self.train_dataset = LeavesData(self.train_name, self.file_path, mode='train')
+        self.valid_dataset = LeavesData(self.train_name, self.file_path, mode='valid')
+        self.test_dataset = LeavesData(self.test_name, self.file_path, mode='test')
         self.train_loader = DataLoader(
             dataset=self.train_dataset,
             batch_size=32, 
@@ -27,6 +31,12 @@ class ModelTrain:
             pin_memory=True,
             num_workers=5
         )
+        self.test_loader = DataLoader(
+            dataset=self.test_dataset,
+            batch_size=32, 
+            shuffle=False,
+            num_workers=5
+        )
         if torch.cuda.is_available():
             self.device = 'cuda'
         else:
@@ -36,6 +46,7 @@ class ModelTrain:
         self.model.fc = nn.Linear(self.model.fc.in_features, classes_num)
         
         self.model = self.model.to(self.device)
+
 
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.0001, weight_decay=0.00001)
         # self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer, mode="min", factor=0.5, patience=3, min_lr = 0.000001)
@@ -104,7 +115,34 @@ class ModelTrain:
 
             if valid_acc > best_acc:
                 best_acc = valid_acc
-                torch.save(self.model.state_dict(), 'pre_res_model.ckpt')
+                torch.save(self.model.state_dict(), self.model_path)
+    def test(self):
+        model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        model.fc = nn.Linear(self.model.fc.in_features, classes_num)
+        
+        model = self.model.to(self.device)
+        model.load_state_dict(torch.load(self.model_path))
+
+        model.eval()
+
+        predictions = []
+        for batch in tqdm(self.test_loader):
+            imgs = batch
+
+            imgs = imgs.to(self.device)
+
+            with torch.no_grad():
+                logits = model(imgs)
+            predictions.extend(logits.argmax(dim=-1).cpu().numpy().tolist())
+        preds = []
+        for i in predictions:
+            preds.append(num_to_class[i])
+        test_data = pd.read_csv(self.test_name)
+        test_data['label'] = pd.Series(preds)
+        submission = pd.concat([test_data['image'], test_data['label']], axis=1)
+        submission.to_csv(self.savefile_path, index=False)
+        print("Done!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    
 
 
 
