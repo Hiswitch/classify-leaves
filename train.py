@@ -43,7 +43,8 @@ class ModelTrain:
         else:
             self.device = 'cpu'
         
-        self.model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        # self.model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        self.model = models.resnext50_32x4d(weights = models.ResNeXt50_32X4D_Weights.IMAGENET1K_V1)
         self.model.fc = nn.Linear(self.model.fc.in_features, classes_num)
         
         self.model = self.model.to(self.device)
@@ -59,7 +60,7 @@ class ModelTrain:
 
         self.epoch_num = 20
 
-        self.model_num = 2
+        self.model_num = 3
     def train(self):
         best_acc = 0
 
@@ -125,8 +126,8 @@ class ModelTrain:
                       ]
         predictions_list = []
         for i in range(self.model_num):
-            model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
-            model.fc = nn.Linear(self.model.fc.in_features, classes_num)
+            # model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+            # model.fc = nn.Linear(self.model.fc.in_features, classes_num)
             
             model = self.model.to(self.device)
             model.load_state_dict(torch.load(model_path[i], map_location=torch.device('cuda:0')))
