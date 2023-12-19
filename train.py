@@ -6,13 +6,14 @@ from torch import nn
 from defs import classes_num, num_to_class
 from tqdm import tqdm
 import pandas as pd
+import random
 
 class ModelTrain:
     def __init__(self):
         self.train_name = 'train.csv'
         self.test_name = 'test.csv'
         self.file_path = ''
-        self.model_path = 'pre_res_model.ckpt'
+        self.model_path = 'model.ckpt'
         self.savefile_path = 'submission.csv'
         self.train_dataset = LeavesData(self.train_name, self.file_path, mode='train')
         self.valid_dataset = LeavesData(self.train_name, self.file_path, mode='valid')
@@ -38,7 +39,7 @@ class ModelTrain:
             num_workers=5
         )
         if torch.cuda.is_available():
-            self.device = 'cuda'
+            self.device = 'cuda:0'
         else:
             self.device = 'cpu'
         
@@ -57,6 +58,8 @@ class ModelTrain:
         self.criterion = nn.CrossEntropyLoss()
 
         self.epoch_num = 20
+
+        self.model_num = 2
     def train(self):
         best_acc = 0
 
@@ -117,23 +120,36 @@ class ModelTrain:
                 best_acc = valid_acc
                 torch.save(self.model.state_dict(), self.model_path)
     def test(self):
-        model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
-        model.fc = nn.Linear(self.model.fc.in_features, classes_num)
+        model_path = ['resnet50_20.ckpt',
+                      'resnet50_30.ckpt',
+                      ]
+        predictions_list = []
+        for i in range(self.model_num):
+            model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+            model.fc = nn.Linear(self.model.fc.in_features, classes_num)
+            
+            model = self.model.to(self.device)
+            model.load_state_dict(torch.load(model_path[i], map_location=torch.device('cuda:0')))
+
+            model.eval()
+
+            predictions = []
+            for batch in tqdm(self.test_loader):
+                imgs = batch
+
+                imgs = imgs.to(self.device)
+
+                with torch.no_grad():
+                    logits = model(imgs)
+                predictions.extend(logits.argmax(dim=-1).cpu().numpy().tolist())
+            predictions_list.append(predictions)
         
-        model = self.model.to(self.device)
-        model.load_state_dict(torch.load(self.model_path, map_location=torch.device('cpu')))
+        for i in range(len(predictions_list[0])):
+            possible_list = []
+            for j in range(self.model_num):
+                possible_list.append(predictions_list[j][i])
+            predictions.append(random.sample(possible_list, 1)[0])
 
-        model.eval()
-
-        predictions = []
-        for batch in tqdm(self.test_loader):
-            imgs = batch
-
-            imgs = imgs.to(self.device)
-
-            with torch.no_grad():
-                logits = model(imgs)
-            predictions.extend(logits.argmax(dim=-1).cpu().numpy().tolist())
         preds = []
         for i in predictions:
             preds.append(num_to_class[i])
@@ -141,7 +157,6 @@ class ModelTrain:
         test_data['label'] = pd.Series(preds)
         submission = pd.concat([test_data['image'], test_data['label']], axis=1)
         submission.to_csv(self.savefile_path, index=False)
-        print("Done!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     
 
 
