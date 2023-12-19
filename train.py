@@ -139,9 +139,11 @@ class ModelTrain:
 
                 imgs = imgs.to(self.device)
 
+
                 with torch.no_grad():
                     logits = model(imgs)
-                predictions.extend(logits.argmax(dim=-1).cpu().numpy().tolist())
+                logits = torch.argmax(logits,dim=1).reshape(-1)
+                predictions.extend(logits.cpu().numpy().tolist())
             predictions_list.append(predictions)
         
         for i in range(len(predictions_list[0])):
