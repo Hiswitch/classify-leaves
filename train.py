@@ -60,7 +60,7 @@ class ModelTrain:
 
         self.epoch_num = 20
 
-        self.model_num = 3
+        self.model_num = 5
     def train(self):
         best_acc = 0
 
@@ -119,10 +119,13 @@ class ModelTrain:
 
             if valid_acc > best_acc:
                 best_acc = valid_acc
-                torch.save(self.model.state_dict(), self.model_path)
+                torch.save(self.model.state_dict(), str(epoch) + '_' + self.model_path)
     def test(self):
         model_path = ['resnet50_20.ckpt',
                       'resnet50_30.ckpt',
+                      'resnet50_30.ckpt',
+                      'resnext50_32x4d_20.ckpt',
+                      'resnext50_32x4d_25.ckpt'
                       ]
         predictions_list = []
         for i in range(self.model_num):
